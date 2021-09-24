@@ -6,16 +6,20 @@ let fs = require('fs')
 
 const { clientId, clientSecret, port, redirectUrl } = require('./config.json');
 
+
+
 const app = express();
 
 app.get('/', async ({ query }, response) => {
     const { code } = query;
 
-    console.log(code);
+    const data = {
+        redirectUrl: redirectUrl,
+        userData: null    
+    }
 
     if (code) {
         try {
-
             const oauthResult = await fet('https://discord.com/api/oauth2/token', {
                 method: 'POST',
                 body: new URLSearchParams({
@@ -23,7 +27,7 @@ app.get('/', async ({ query }, response) => {
                     client_secret: clientSecret,
                     code,
                     grant_type: 'authorization_code',
-                    redirect_uri: `${redirectUrl}${port}`,
+                    redirect_uri: `${redirectUrl}`,
                     scope: 'identify',
                 }),
                 headers: {
@@ -36,7 +40,7 @@ app.get('/', async ({ query }, response) => {
             //Unauthorized
             if (!oauthData.expires_in) {
                 console.log('Get Fucked');
-                respond(response);
+                respond(response, data);
                 return;
             }
 
@@ -49,8 +53,9 @@ app.get('/', async ({ query }, response) => {
             const userData = await userResult.json();
             console.log(userData);
             console.log(userData.username);
+            data.userData = userData;
 
-            respond(response, userData);
+            respond(response, data);
             return;
 
         } catch (error) {
@@ -59,11 +64,11 @@ app.get('/', async ({ query }, response) => {
     }
 
 
-    respond(response);
+    respond(response, data);
     return;
 });
 
-function respond(res: any, data: any = null) {
+function respond(res: any, data: any) {
     console.log(data);
     fs.readFile(__dirname + '/index.html', 'utf-8', (err, html) => {
         res.send(ejs.render(html, { data: JSON.stringify(data) }))

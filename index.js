@@ -15,7 +15,10 @@ const { clientId, clientSecret, port, redirectUrl } = require('./config.json');
 const app = express();
 app.get('/', ({ query }, response) => __awaiter(this, void 0, void 0, function* () {
     const { code } = query;
-    console.log(code);
+    const data = {
+        redirectUrl: redirectUrl,
+        userData: null
+    };
     if (code) {
         try {
             const oauthResult = yield fet('https://discord.com/api/oauth2/token', {
@@ -25,7 +28,7 @@ app.get('/', ({ query }, response) => __awaiter(this, void 0, void 0, function* 
                     client_secret: clientSecret,
                     code,
                     grant_type: 'authorization_code',
-                    redirect_uri: `${redirectUrl}${port}`,
+                    redirect_uri: `${redirectUrl}`,
                     scope: 'identify',
                 }),
                 headers: {
@@ -36,7 +39,7 @@ app.get('/', ({ query }, response) => __awaiter(this, void 0, void 0, function* 
             //Unauthorized
             if (!oauthData.expires_in) {
                 console.log('Get Fucked');
-                respond(response);
+                respond(response, data);
                 return;
             }
             const userResult = yield fet('https://discord.com/api/users/@me', {
@@ -47,17 +50,18 @@ app.get('/', ({ query }, response) => __awaiter(this, void 0, void 0, function* 
             const userData = yield userResult.json();
             console.log(userData);
             console.log(userData.username);
-            respond(response, userData);
+            data.userData = userData;
+            respond(response, data);
             return;
         }
         catch (error) {
             console.error(error);
         }
     }
-    respond(response);
+    respond(response, data);
     return;
 }));
-function respond(res, data = null) {
+function respond(res, data) {
     console.log(data);
     fs.readFile(__dirname + '/index.html', 'utf-8', (err, html) => {
         res.send(ejs.render(html, { data: JSON.stringify(data) }));

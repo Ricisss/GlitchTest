@@ -14,7 +14,7 @@
         </h2>
     </div>
     <a id="login" style="display: none;"
-        href="https://discord.com/api/oauth2/authorize?client_id=890862907951304724&redirect_uri=http://localhost:5000&response_type=code&scope=identify">Identify
+        href="">Identify
         Yourself</a>
     <script type="text/javascript">
         window.onload = () => {
@@ -39,8 +39,11 @@
                 })
                 .catch(console.error);
         };
-        var userData = JSON.parse('<%- data %>');
-        console.log(userData);
+        var data = JSON.parse('<%- data %>');
+        var userData = data.userData;
+
+        document.getElementById('login').href = `https://discord.com/api/oauth2/authorize?client_id=890862907951304724&redirect_uri=${data.redirectUrl}&response_type=code&scope=identify`
+        console.log(data);
 
         if (userData) {
             document.getElementById('name').innerText = userData.username;
